@@ -42,14 +42,12 @@ DROPPING_CHARS = 50
 MIN_SPEED = 1
 MAX_SPEED = 7
 RANDOM_CLEANUP = 100
-WINDOW_CHANCE = 50
-WINDOW_SIZE = 25
-WINDOW_ANIMATION_SPEED = 3
 FPS = 25
 SLEEP_MILLIS = 1.0/FPS
 USE_COLORS = False
 SCREENSAVER_MODE = True
-MATRIX_CODE_CHARS = "ɀɁɂŧϢϣϤϥϦϧϨϫϬϭϮϯϰϱϢϣϤϥϦϧϨϩϪϫϬϭϮϯϰ߃߄༣༤༥༦༧༩༪༫༬༭༮༯༰༱༲༳༶"
+MATRIX_CODE_CHARS = "01"
+MATRIX_CODE_CHARS = list(MATRIX_CODE_CHARS)
 
 ########################################################################
 # CODE
@@ -58,119 +56,68 @@ COLOR_CHAR_NORMAL = 1
 COLOR_CHAR_HIGHLIGHT = 2
 COLOR_WINDOW = 3
 
+NORMAL_ATTR = curses.A_NORMAL
+HIGHLIGHT_ATTR = curses.A_REVERSE
+
+CLEAR_STR = ' '
+
 class FallingChar(object):
-    matrixchr = list(MATRIX_CODE_CHARS)
-    normal_attr = curses.A_NORMAL
-    highlight_attr = curses.A_REVERSE        
     
-    def __init__(self, width, MIN_SPEED, MAX_SPEED):
-        self.x = 0
-        self.y = 0
+    def __init__(self, WINDOW_HEIGHT, WINDOW_WIDTH, x):
+        self.x = x
         self.speed = 1
-        self.char = ' '
-        self.reset(width, MIN_SPEED, MAX_SPEED)
+        self.char = random.choice(MATRIX_CODE_CHARS)
+        self.WINDOW_HEIGHT = WINDOW_HEIGHT
+        self.reset()
+        self.y = randint(0, WINDOW_WIDTH // 3)
+        self.max_length = randint(5, self.WINDOW_HEIGHT // 2)
+        self.length = 0
     
-    def reset(self, width, MIN_SPEED, MAX_SPEED):
-        self.char = random.choice(FallingChar.matrixchr).encode(encoding)
-        self.x = randint(1, width - 1)
+    def reset(self):
+        # self.length = 0
         self.y = 0
-        self.speed = randint(MIN_SPEED, MAX_SPEED)
-        # offset makes sure that chars with same speed don't move all in same frame
-        self.offset = randint(0, self.speed)
+        self.speed = randint(1, 3)
     
     def tick(self, scr, steps):
-        height, width = scr.getmaxyx()
         if self.advances(steps):
-            # if window was resized and char is out of bounds, reset
-            self.out_of_bounds_reset(width, height)
-            # make previous char curses.A_NORMAL
-            if USE_COLORS:
-                scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_NORMAL))
-            else:
-                scr.addstr(self.y, self.x, self.char, curses.A_NORMAL)
-                
-            # choose new char and draw it A_REVERSE if not out of bounds
-            self.char = random.choice(FallingChar.matrixchr).encode(encoding)
+            scr.addstr(self.y, self.x, self.char, NORMAL_ATTR)
             self.y += 1
-            if not self.out_of_bounds_reset(width, height):
-                if USE_COLORS:
-                    scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_HIGHLIGHT))
-                else:
-                    scr.addstr(self.y, self.x, self.char, curses.A_REVERSE)
-    
-    def out_of_bounds_reset(self, width, height):
-        if self.x > width-2:
-            self.reset(width, MIN_SPEED, MAX_SPEED)
-            return True
-        if self.y > height-2:
-            self.reset(width, MIN_SPEED, MAX_SPEED)
-            return True
-        return False
+            if self.y >= self.WINDOW_HEIGHT:
+               self.reset() 
+            self.char = random.choice(MATRIX_CODE_CHARS)
+            scr.addstr(self.y, self.x, self.char, HIGHLIGHT_ATTR)
+            if self.length < self.max_length:
+                self.length += 1
+            else:
+                clear_y = self.y - self.length
+                if clear_y < 0:
+                    clear_y += self.WINDOW_HEIGHT
+                scr.addstr(clear_y, self.x, CLEAR_STR, NORMAL_ATTR)
+            # if window was resized and char is out of bounds, reset
+            # self.out_of_bounds_reset(width, height)
+            # # make previous char curses.A_NORMAL
+            # if USE_COLORS:
+                # scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_NORMAL))
+            # else:
+                # scr.addstr(self.y, self.x, self.char, curses.A_NORMAL)
+                
+            # # choose new char and draw it A_REVERSE if not out of bounds
+            # self.char = random.choice(FallingChar.matrixchr).encode(encoding)
+            # self.y += 1
+            # if not self.out_of_bounds_reset(width, height):
+                # if USE_COLORS:
+                    # scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_HIGHLIGHT))
+                # else:
+                    # scr.addstr(self.y, self.x, self.char, curses.A_REVERSE)
     
     def advances(self, steps):
-        if steps % (self.speed + self.offset) == 0:
+        if steps % (self.speed) == 0:
             return True
         return False
     
     def step(self, steps, scr):
        
         return -1, -1, None
-
-class WindowAnimation(object):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.step = 0
-        
-    def tick(self, scr, steps):
-        if self.step > WINDOW_SIZE:
-            #stop window animation after some steps
-            self.draw_frame(scr, self.x - self.step, self.y - self.step,
-                            self.x + self.step, self.y + self.step,
-                            curses.A_NORMAL)
-            return False
-        
-        # clear all characters covered by the window frame
-        for i in range(WINDOW_ANIMATION_SPEED):
-            anistep = self.step + i
-            self.draw_frame(scr, self.x - anistep, self.y - anistep,
-                            self.x + anistep, self.y + anistep,
-                            curses.A_NORMAL, ' ')
-        #cancel last animation
-        self.draw_frame(scr, self.x - self.step, self.y - self.step,
-                        self.x + self.step, self.y + self.step,
-                        curses.A_NORMAL)
-        #next step
-        self.step += WINDOW_ANIMATION_SPEED
-        
-        #draw outer frame
-        self.draw_frame(scr, self.x - self.step, self.y - self.step,
-                        self.x + self.step, self.y + self.step,
-                        curses.A_REVERSE)
-        return True
-
-    def draw_frame(self, scr, x1, y1, x2, y2, attrs, clear_char=None):
-        if USE_COLORS:
-            if attrs == curses.A_REVERSE:
-                attrs = curses.color_pair(COLOR_WINDOW)
-        h, w = scr.getmaxyx()
-        for y in (y1, y2):
-            for x in range(x1, x2+1):
-                if x < 0 or x > w-1 or y < 0 or y > h-2:
-                    continue
-                if clear_char is None:
-                    scr.chgat(y, x, 1, attrs)
-                else:
-                    scr.addstr(y, x, clear_char, attrs)
-        for x in (x1, x2):
-            for y in range(y1, y2+1):
-                if x < 0 or x > w-1 or y < 0 or y > h-2:
-                    continue
-                if clear_char is None:
-                    scr.chgat(y, x, 1, attrs)
-                else:
-                    scr.addstr(y, x, clear_char, attrs)
-
 
 # we don't need a good PRNG, just something that looks a bit random.
 def rand():
@@ -205,31 +152,21 @@ def main():
         curses.init_pair(COLOR_WINDOW, curses.COLOR_GREEN, curses.COLOR_GREEN)
     
     height, width = scr.getmaxyx()    
-    window_animation = None
     lines = []
-    for i in range(DROPPING_CHARS):
-        l = FallingChar(width, MIN_SPEED, MAX_SPEED)
-        l.y = randint(0, height-2)
-        lines.append(l)
+    for i in range(width):
+        if i % 2 == 0:
+            l = FallingChar(height, width, i)
+            lines.append(l)
         
     scr.refresh()
     while True:
         height, width = scr.getmaxyx()
         for line in lines:
             line.tick(scr, steps)
-        for i in range(RANDOM_CLEANUP):
-            x = randint(0, width-1)
-            y = randint(0, height-1)
-            scr.addstr(y, x, ' ')
-        if randint(0, WINDOW_CHANCE) == 1:
-            if window_animation is None:
-                #start window animation
-                line = random.choice(lines)
-                window_animation = WindowAnimation(line.x, line.y)
-        if not window_animation is None:
-           still_active = window_animation.tick(scr, steps)
-           if not still_active:
-               window_animation = None
+        # for i in range(RANDOM_CLEANUP):
+            # x = randint(0, width-1)
+            # y = randint(0, height-1)
+            # scr.addstr(y, x, ' ')
 
         scr.refresh()
         time.sleep(SLEEP_MILLIS)
