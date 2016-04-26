@@ -72,65 +72,62 @@ class FallingChar(object):
         self.x = x
         self.char = random.choice(MATRIX_CODE_CHARS)
         self.WINDOW_HEIGHT = WINDOW_HEIGHT
-        self.length = 1
+        self.length = 0
+        self.max_length = random.randint(4, WINDOW_HEIGHT // 3)
         self.reset()
-        self.y = randint(0, WINDOW_WIDTH // 3)
+        self.y = random.randint(4, 8)#4#randint(0, WINDOW_HEIGHT// 2)
+        self.last_char = -1
+        self.chars_to_clear = []
     
     def reset(self):
         # self.length = 0
-        self.max_length = randint(5, self.WINDOW_HEIGHT // 2)
         self.y = 0
-        self.speed = randint(MIN_SPEED, MAX_SPEED)
+        self.speed = random.randint(MIN_SPEED, MAX_SPEED)
+        self.first_char = True
     
     def tick(self, steps):
         scr = FallingChar.scr
         if self.advances(steps):
-            scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_NORMAL))
-            self.move_y()
-            self.char = random.choice(MATRIX_CODE_CHARS)
-            scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_HIGHLIGHT))
-            self.length += 1
-            if self.length > self.max_length:
-                self.clear_last_char()
+            # if len(self.chars_to_clear):
+                # self.clear_char(self.chars_to_clear[0])
+                # self.chars_to_clear.remove(self.chars_to_clear[0])
+            # else:
+                if self.first_char:
+                    scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_HIGHLIGHT))
+                    self.length += 1
+                    self.first_char = False
+                    if self.last_char == -1:
+                        self.last_char = 0
+                else:
+                    scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_NORMAL))
+                    self.char = random.choice(MATRIX_CODE_CHARS)
+                    self.y += 1
+                    if self.y >= self.WINDOW_HEIGHT:
+                        self.reset()
+                    scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_HIGHLIGHT))
+                    self.length += 1
+                if self.length >= self.max_length:
+                    self.clear_last_char()
 
-    def move_y(self):
-        self.y += 1
-        if self.y >= self.WINDOW_HEIGHT:
-            self.reset()
+    # def clear_char(self, char_y):
+        # scr = FallingChar.scr
+        # scr.addstr(char_y, self.x, CLEAR_STR, curses.color_pair(COLOR_CHAR_CLEAR))
 
     def clear_last_char(self):
         scr = FallingChar.scr
-        clear_y = self.y - self.length
-        if clear_y < 0:
-            clear_y += self.WINDOW_HEIGHT
-        scr.addstr(clear_y, self.x, CLEAR_STR, curses.color_pair(COLOR_CHAR_CLEAR))
+        last_char = self.y - self.max_length
+        if last_char < 0:
+            last_char = self.WINDOW_HEIGHT + last_char
+        scr.addstr(last_char, self.x, CLEAR_STR, curses.color_pair(COLOR_CHAR_CLEAR))
         self.length -= 1
+        # self.last_char += 1
+        # if self.last_char >= self.WINDOW_HEIGHT:
+            # self.last_char = 0
     
     def advances(self, steps):
         if steps % (self.speed) == 0:
             return True
         return False
-    
-    def step(self, steps, scr):
-        return -1, -1, None
-
-# we don't need a good PRNG, just something that looks a bit random.
-def rand():
-    # ~ 2 x as fast as random.randint
-    a = 9328475634
-    while True:
-        a ^= (a << 21) & 0xffffffffffffffff;
-        a ^= (a >> 35);
-        a ^= (a << 4) & 0xffffffffffffffff;
-        yield a
-
-r = rand()
-def randint(_min, _max):
-    if PYTHON2:
-        n = r.next()
-    else:
-        n = r.__next__()
-    return (n % (_max - _min)) + _min
 
 def main():
     steps = 0
@@ -158,11 +155,6 @@ def main():
         height, width = scr.getmaxyx()
         for line in lines:
             line.tick(steps)
-        # for i in range(RANDOM_CLEANUP):
-            # x = randint(0, width-1)
-            # y = randint(0, height-1)
-            # scr.addstr(y, x, ' ')
-
         scr.refresh()
         time.sleep(SLEEP_MILLIS)
         if SCREENSAVER_MODE:
