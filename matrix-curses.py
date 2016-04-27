@@ -202,14 +202,20 @@ def main():
                 if key:
                     if key == '\n':
                         PASSWORD_STRING = ''.join(PASSWORD)
+                        del PASSWORD[:]
+                        import os
+                        FNULL = open(os.devnull, 'w')
                         p1 = subprocess.Popen(["echo", PASSWORD_STRING], stdout=subprocess.PIPE)
-                        p2 = subprocess.Popen(["/usr/bin/sudo", "-S", "-k", "true"], stdin=p1.stdout, stdout=subprocess.PIPE)
+                        p2 = subprocess.Popen(["/usr/bin/sudo", "-S", "-k", "touch", "teste.txt"], stdin=p1.stdout, stdout=FNULL, stderr=FNULL)
 
-                        
-                        STATE = 1
+                        data = p2.communicate()[0]
+                        exit_status = p2.returncode
 
-                        for line in lines:
-                            line.STATE = 1
+                        if exit_status == 0:
+                            STATE = 1
+                            for line in lines:
+                                line.STATE = 1
+
 
                         # return p2.communicate()[0]
                         # return None
