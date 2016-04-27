@@ -71,66 +71,82 @@ CLEAR_STR = ' '
 
 class FallingChar(object):
     
-    def __init__(self, WINDOW_HEIGHT, WINDOW_WIDTH, x):
+    def __init__(self, WINDOW_HEIGHT, WINDOW_WIDTH, x, STATE):
+        self.STATE = STATE
         self.x = x
         self.char = random.choice(MATRIX_CODE_CHARS)
         self.WINDOW_HEIGHT = WINDOW_HEIGHT
         self.length = 0
         self.max_length = random.randint(4, WINDOW_HEIGHT // 3)
         self.reset()
-        self.y = random.randint(4, 8)#4#randint(0, WINDOW_HEIGHT// 2)
+        self.y = random.randint(2, 8)#4#randint(0, WINDOW_HEIGHT// 2)
         self.last_char = -1
         self.chars_to_clear = []
+        if self.STATE == 1:
+            self.y = 0
+            self.max_length = WINDOW_HEIGHT // 3
+            self.speed = MAX_SPEED
+
     
     def reset(self):
-        # self.length = 0
         self.y = 0
         self.speed = random.randint(MIN_SPEED, MAX_SPEED)
         self.first_char = True
     
     def tick(self, steps):
+        if self.STATE == 2:
+            self.clear_last_char()
+            return
+
         scr = FallingChar.scr
         if self.advances(steps):
-            # if len(self.chars_to_clear):
-                # self.clear_char(self.chars_to_clear[0])
-                # self.chars_to_clear.remove(self.chars_to_clear[0])
-            # else:
-                if self.first_char:
-                    if not logo.logo.is_inside_logo(self.x, self.y):
-                        scr.addstr(self.y, self.x, self.char, curses.color_pair(curses_utils.COLOR_CHAR_HIGHLIGHT))
-                    self.length += 1
-                    self.first_char = False
-                    if self.last_char == -1:
-                        self.last_char = 0
-                else:
-                    if not logo.logo.is_inside_logo(self.x, self.y):
-                        scr.addstr(self.y, self.x, self.char, curses.color_pair(curses_utils.COLOR_CHAR_NORMAL))
-                    self.char = random.choice(MATRIX_CODE_CHARS)
-                    self.y += 1
-                    if self.y >= self.WINDOW_HEIGHT:
-                        self.reset()
-                    if not logo.logo.is_inside_logo(self.x, self.y):
-                        scr.addstr(self.y, self.x, self.char, curses.color_pair(curses_utils.COLOR_CHAR_HIGHLIGHT))
-                    self.length += 1
-                if self.length >= self.max_length:
-                    self.clear_last_char()
+            if self.first_char:
+                if self.STATE == 1 or not logo.logo.is_inside_logo(self.x, self.y):
+                    scr.addstr(self.y, self.x, self.char, curses.color_pair(curses_utils.COLOR_CHAR_HIGHLIGHT))
 
-    # def clear_char(self, char_y):
-        # scr = FallingChar.scr
-        # scr.addstr(char_y, self.x, CLEAR_STR, curses.color_pair(COLOR_CHAR_CLEAR))
+                self.length += 1
+                self.first_char = False
+                if self.last_char == -1:
+                    self.last_char = 0
+
+            else:
+                if self.STATE == 1 or not logo.logo.is_inside_logo(self.x, self.y):
+                    scr.addstr(self.y, self.x, self.char, curses.color_pair(curses_utils.COLOR_CHAR_NORMAL))
+
+                self.char = random.choice(MATRIX_CODE_CHARS)
+                self.y += 1
+                if self.y >= self.WINDOW_HEIGHT:
+                    if self.STATE >= 1:
+                        #set_gambiarra(True)
+                        self.length += 1
+                        self.clear_last_char()
+                        #set_gambiarra(False)
+                        self.STATE = 2
+                        return
+
+                    else:
+                        self.reset()
+
+                if self.STATE == 1 or not logo.logo.is_inside_logo(self.x, self.y):
+                    scr.addstr(self.y, self.x, self.char, curses.color_pair(curses_utils.COLOR_CHAR_HIGHLIGHT))
+
+                self.length += 1
+            if self.length >= self.max_length:
+                self.clear_last_char()
+
 
     def clear_last_char(self):
+        if self.length <= 0:
+            return
+
         scr = FallingChar.scr
-        last_char = self.y - self.max_length
+        last_char = self.y - self.length
         if last_char < 0:
             last_char = self.WINDOW_HEIGHT + last_char
-        curses_utils.set_text(self.x, last_char, CLEAR_STR, curses.color_pair(curses_utils.COLOR_CHAR_CLEAR))
-        # if not logo.logo.is_inside_logo(self.x, last_char):
-            # scr.addstr(last_char, self.x, CLEAR_STR, curses.color_pair(curses_utils.COLOR_CHAR_CLEAR))
+
+        if self.STATE >= 1 or not logo.logo.is_inside_logo(self.x, last_char):
+            scr.addstr(last_char, self.x, CLEAR_STR, curses.color_pair(curses_utils.COLOR_CHAR_CLEAR))
         self.length -= 1
-        # self.last_char += 1
-        # if self.last_char >= self.WINDOW_HEIGHT:
-            # self.last_char = 0
     
     def advances(self, steps):
         if steps % (self.speed) == 0:
@@ -150,22 +166,35 @@ def main():
     FallingChar.scr = scr
     
     height, width = scr.getmaxyx()    
+    width = width - 1
 
     logo.logo.print()
 
     lines = []
     for i in range(width):
         if i % 2 == 0:
-            l = FallingChar(height, width, i)
+            l = FallingChar(height, width, i, STATE)
             lines.append(l)
         
     scr.refresh()
     while True:
-        height, width = scr.getmaxyx()
         for line in lines:
             line.tick(steps)
+            if line.STATE == 2 and STATE == 1:
+                STATE = 2
+
         scr.refresh()
         time.sleep(SLEEP_MILLIS)
+        if STATE == 2:
+            STATE = 3
+            for i in range(width):
+                l = FallingChar(height, width, i, 1)
+                lines.append(l)
+            # for i in range(width):
+                # if i % 2 == 0:
+                    # l = FallingChar(height, width, i, 1)
+                    # lines.append(l)
+
        
         if STATE == 0:
             try:
@@ -173,13 +202,16 @@ def main():
                 if key:
                     if key == '\n':
                         PASSWORD_STRING = ''.join(PASSWORD)
-                        # subprocess.call(["echo", "OK"], stdout=subprocess.PIPE)
-                        p1 = subprocess.Popen(["echo", PASSWORD_STRING], stdout=subprocess.PIPE, shell=True)
-                        p2 = subprocess.Popen(["/usr/bin/sudo", "-S", "-p", "''", "true"], stdin=p1.stdout, stdout=subprocess.PIPE)
+                        p1 = subprocess.Popen(["echo", PASSWORD_STRING], stdout=subprocess.PIPE)
+                        p2 = subprocess.Popen(["/usr/bin/sudo", "-S", "-k", "true"], stdin=p1.stdout, stdout=subprocess.PIPE)
+
                         
                         STATE = 1
 
-                        return p2.communicate()[0]
+                        for line in lines:
+                            line.STATE = 1
+
+                        # return p2.communicate()[0]
                         # return None
                     else:
                         PASSWORD.append(key)
