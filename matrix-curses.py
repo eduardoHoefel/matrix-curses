@@ -35,6 +35,9 @@ PYTHON2 = sys.version_info.major < 3
 locale.setlocale(locale.LC_ALL, '')
 encoding = locale.getpreferredencoding()
 
+import curses_utils
+import logo
+
 ########################################################################
 # TUNABLES
 
@@ -42,7 +45,7 @@ MIN_SPEED = 1
 MAX_SPEED = 3
 FPS = 25
 SLEEP_MILLIS = 1.0/FPS
-SCREENSAVER_MODE = True
+SCREENSAVER_MODE = False
 MATRIX_CODE_CHARS = "01"
 MATRIX_CODE_CHARS = list(MATRIX_CODE_CHARS)
 
@@ -93,18 +96,21 @@ class FallingChar(object):
                 # self.chars_to_clear.remove(self.chars_to_clear[0])
             # else:
                 if self.first_char:
-                    scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_HIGHLIGHT))
+                    if not logo.logo.is_inside_logo(self.x, self.y):
+                        scr.addstr(self.y, self.x, self.char, curses.color_pair(curses_utils.COLOR_CHAR_HIGHLIGHT))
                     self.length += 1
                     self.first_char = False
                     if self.last_char == -1:
                         self.last_char = 0
                 else:
-                    scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_NORMAL))
+                    if not logo.logo.is_inside_logo(self.x, self.y):
+                        scr.addstr(self.y, self.x, self.char, curses.color_pair(curses_utils.COLOR_CHAR_NORMAL))
                     self.char = random.choice(MATRIX_CODE_CHARS)
                     self.y += 1
                     if self.y >= self.WINDOW_HEIGHT:
                         self.reset()
-                    scr.addstr(self.y, self.x, self.char, curses.color_pair(COLOR_CHAR_HIGHLIGHT))
+                    if not logo.logo.is_inside_logo(self.x, self.y):
+                        scr.addstr(self.y, self.x, self.char, curses.color_pair(curses_utils.COLOR_CHAR_HIGHLIGHT))
                     self.length += 1
                 if self.length >= self.max_length:
                     self.clear_last_char()
@@ -118,7 +124,9 @@ class FallingChar(object):
         last_char = self.y - self.max_length
         if last_char < 0:
             last_char = self.WINDOW_HEIGHT + last_char
-        scr.addstr(last_char, self.x, CLEAR_STR, curses.color_pair(COLOR_CHAR_CLEAR))
+        curses_utils.set_text(self.x, last_char, CLEAR_STR, curses.color_pair(curses_utils.COLOR_CHAR_CLEAR))
+        # if not logo.logo.is_inside_logo(self.x, last_char):
+            # scr.addstr(last_char, self.x, CLEAR_STR, curses.color_pair(curses_utils.COLOR_CHAR_CLEAR))
         self.length -= 1
         # self.last_char += 1
         # if self.last_char >= self.WINDOW_HEIGHT:
@@ -131,19 +139,16 @@ class FallingChar(object):
 
 def main():
     steps = 0
-    scr = curses.initscr()
+    curses_utils.init()
+    scr = curses_utils.get_SCR()
     FallingChar.scr = scr
-    scr.nodelay(1)
-    curses.curs_set(0)
-    curses.noecho()
-    
-    curses.start_color()
-    curses.use_default_colors()
-    curses.init_pair(COLOR_CHAR_NORMAL, COLOR_GREEN, COLOR_BLACK)
-    curses.init_pair(COLOR_CHAR_HIGHLIGHT, COLOR_BLACK, COLOR_GREEN)
-    curses.init_pair(COLOR_CHAR_CLEAR, COLOR_GRAY_95, COLOR_BLACK)
     
     height, width = scr.getmaxyx()    
+
+    logo.logo.print()
+    # for i in range(arch.height):
+        # scr.addstr((height - arch.height) // 2 + i, (width - arch.width) // 2, arch.lines[i])
+
     lines = []
     for i in range(width):
         if i % 2 == 0:
