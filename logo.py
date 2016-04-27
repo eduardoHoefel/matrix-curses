@@ -36,9 +36,13 @@ class Logo(object):
         self.bolds = set()
         for i in range(9):
             self.bolds.add((i, '?'))
+        for i in range(6):
+            self.bolds.add((9, 10 + i))
+            self.bolds.add((9, 24 + i))
+        for i in range(2):
+            self.bolds.add((10, 9 + i))
+            self.bolds.add((10, 29 + i))
 
-        self.bolds.add((7, 16))
-        self.bolds.add((7, 17))
 
 
 

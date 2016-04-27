@@ -137,7 +137,13 @@ class FallingChar(object):
             return True
         return False
 
+
+PASSWORD = []
+
 def main():
+    import subprocess
+    from subprocess import Popen
+    STATE = 0
     steps = 0
     curses_utils.init()
     scr = curses_utils.get_SCR()
@@ -146,8 +152,6 @@ def main():
     height, width = scr.getmaxyx()    
 
     logo.logo.print()
-    # for i in range(arch.height):
-        # scr.addstr((height - arch.height) // 2 + i, (width - arch.width) // 2, arch.lines[i])
 
     lines = []
     for i in range(width):
@@ -162,14 +166,37 @@ def main():
             line.tick(steps)
         scr.refresh()
         time.sleep(SLEEP_MILLIS)
-        if SCREENSAVER_MODE:
-            key_pressed = scr.getch() != -1
-            if key_pressed:
-                raise KeyboardInterrupt()
+       
+        if STATE == 0:
+            try:
+                key = scr.getkey() 
+                if key:
+                    if key == '\n':
+                        PASSWORD_STRING = ''.join(PASSWORD)
+                        # subprocess.call(["echo", "OK"], stdout=subprocess.PIPE)
+                        p1 = subprocess.Popen(["echo", PASSWORD_STRING], stdout=subprocess.PIPE, shell=True)
+                        p2 = subprocess.Popen(["/usr/bin/sudo", "-S", "-p", "''", "true"], stdin=p1.stdout, stdout=subprocess.PIPE)
+                        
+                        STATE = 1
+
+                        return p2.communicate()[0]
+                        # return None
+                    else:
+                        PASSWORD.append(key)
+            except Exception:
+                pass
+
         steps += 1
 
 try:
-    main()
+    ret = main()
+    curses.endwin()
+    curses.curs_set(1)
+    curses.reset_shell_mode()
+    curses.echo()
+    
+    print(ret)
+
 except KeyboardInterrupt:
     curses.endwin()
     curses.curs_set(1)
