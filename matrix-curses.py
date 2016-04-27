@@ -206,15 +206,20 @@ def main():
                         import os
                         FNULL = open(os.devnull, 'w')
                         p1 = subprocess.Popen(["echo", PASSWORD_STRING], stdout=subprocess.PIPE)
-                        p2 = subprocess.Popen(["/usr/bin/sudo", "-S", "-k", "touch", "teste.txt"], stdin=p1.stdout, stdout=FNULL, stderr=FNULL)
+                        p2 = subprocess.Popen(["/usr/bin/sudo", "-S", "-k", "true"], stdin=p1.stdout, stdout=FNULL, stderr=FNULL)
 
                         data = p2.communicate()[0]
                         exit_status = p2.returncode
 
                         if exit_status == 0:
+                            p1 = subprocess.Popen(["/usr/bin/fish", "-c", "unlock"])
+
                             STATE = 1
                             for line in lines:
                                 line.STATE = 1
+
+                        else:
+                            pass
 
 
                         # return p2.communicate()[0]
