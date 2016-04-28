@@ -32,7 +32,7 @@ class MyClass:
         scr.nodelay(1)
         curses.curs_set(0)
         curses.noecho()
-        # curses.nocbreak()
+        curses.raw()
 
         curses.start_color()
         curses.use_default_colors()
