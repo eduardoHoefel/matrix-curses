@@ -7,6 +7,7 @@ a terminal login-manager.
 
 # Requirements
 Python 2 or 3
+
 git
 
 # Instalation
