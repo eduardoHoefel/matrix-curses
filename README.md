@@ -1,4 +1,4 @@
-matrix-login
+matrix_login.py
 =============
 
 a terminal login-manager.
