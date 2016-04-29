@@ -3,52 +3,30 @@ import curses_utils
 import curses
 
 
+
 class Logo(object):
 
     def __init__(self):
 
-        self.PASSWORD = []
+        import logo_images
+        import curses_utils
 
-        self.lines = [
-                "                   -`                  ",
-                "                  .o+`                 ",
-                "                 `ooo/                 ",
-                "                `+oooo:                ",
-                "               `+oooooo:               ",
-                "               -+oooooo+:              ",
-                "             `/:-:++oooo+:             ",
-                "            `/++++/+++++++:            ",
-                "           `/++++++++++++++:           ",
-                "          `/+++ooooooooooooo/`         ",
-                "         ./ooosssso++osssssso+`        ",
-                "        .oossssso-````/ossssss+`       ",
-                "       -osssssso.      :ssssssso.      ",
-                "      :osssssss/        osssso+++.     ",
-                "     /ossssssss/        +ssssooo/-     ",
-                "   `/ossssso+/:-        -:/+osssso+-   ",
-                "  `+sso+:-`                 `.-/+oso:  ",
-                " `++:.                           `-/+/ ",
-                " .`                                 `/ ",
-                "                                       ",
-                "                                       ",
-                "          Username:                    ",
-                "          Password:                    ",
-                "                                       "]
+        self.lines, self.bolds, self.c1, self.c2 = logo_images.get(0)
+        # curses_utils.init_logo_colors(c1, c2)
+
+        self.PASSWORD = []
+        extra_chars = [
+            "                                       ",
+            "                                       ",
+            "          Username:                    ",
+            "          Password:                    ",
+            "                                       "]
+        self.lines.extend(extra_chars)
 
         self.lines = [list(line) for line in self.lines]
         
         self.width = len(self.lines[0])
         self.height = len(self.lines)
-
-        self.bolds = set()
-        for i in range(9):
-            self.bolds.add((i, '?'))
-        for i in range(6):
-            self.bolds.add((9, 10 + i))
-            self.bolds.add((9, 24 + i))
-        for i in range(2):
-            self.bolds.add((10, 9 + i))
-            self.bolds.add((10, 29 + i))
 
         self.U_pos = (21, 10)
         for i in range(self.U_pos[0], self.U_pos[0] + 2):
@@ -138,6 +116,3 @@ class Logo(object):
 
 
 logo = Logo()
-
-        
-

@@ -40,8 +40,7 @@ class MyClass:
         curses.init_pair(COLOR_CHAR_NORMAL, COLOR_GREEN, COLOR_BLACK)
         curses.init_pair(COLOR_CHAR_HIGHLIGHT, COLOR_BLACK, COLOR_GREEN)
         curses.init_pair(COLOR_CHAR_CLEAR, COLOR_GRAY_95, COLOR_BLACK)
-        curses.init_pair(COLOR_CHAR_LOGO_1, COLOR_BLUE, COLOR_BLACK)
-        curses.init_pair(COLOR_CHAR_LOGO_2, COLOR_CYAN, COLOR_BLACK)
+        init_logo_colors()
 
 
 myObject = MyClass()
@@ -49,6 +48,12 @@ myObject = MyClass()
 
 def init():
     myObject.init()
+
+def init_logo_colors():
+        from logo import logo
+        curses.init_pair(COLOR_CHAR_LOGO_1, logo.c1, COLOR_BLACK)
+        curses.init_pair(COLOR_CHAR_LOGO_2, logo.c2, COLOR_BLACK)
+
     
 def get_SCR():
     return myObject.SCR
