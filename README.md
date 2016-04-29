@@ -1,8 +1,22 @@
-matrix-curses
+matrix-login
 =============
 
-matrix code animation for curses - see how deep the rabbit-hole goes
+a terminal login-manager.
 
-![All I see now is blonde, brunette, redhead](https://raw.github.com/devsnd/matrix-curses/master/screenshot.jpg)
+![DEMO](demo.gif)
 
-works with python 2 and 3.
+# Requirements
+Python 2 or 3
+
+# Instalation
+mkdir '~/.config/login'
+cd '~/.config/login'
+git clone 'https://github.com/eduardoHoefel/matrix-curses'
+
+# Usage
+put matrix-login.py to run when you open a terminal
+e.g: "echo '~/.config/login/matrix-login/matrix_login.py' > ~/.bashrc"
+
+# TODO
+bring my exec_if_loged to this repo
+
