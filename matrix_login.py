@@ -212,11 +212,8 @@ def main():
             try:
                 key = scr.getkey() 
                 if key:
-                    if key == '\x7f':
+                    if key == '\x7f' or key == '\x15':
                         logo.password_erase()
-
-                    elif key == '\x15':
-                        logo.password_delete()
 
                     elif key == '\n':
                         import os
